@@ -1,0 +1,74 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "multijson_schema_generator"
+require "json"
+
+# u1 = {
+#   name: 'John',
+#   inny: {
+#     a: 'asd',
+#     b: 'sdsdf'
+#   },
+#   age: 21
+# }
+# u2 = {
+#   name: 'Adam',
+#   hobbies: %w(guitar banjo)
+# }
+# u3 = {
+#   name: 'Angelica',
+#   inny: nil,
+#   address: [
+#     {
+#       street: 'Norblina',
+#       city: 'Katowice'
+#     },
+#     {
+#       city: 'Katowice'
+#     }
+#   ]
+# }
+# u4 = {
+#   name: 'Angelica',
+#   age: nil,
+#   inny: {
+#     a: 'sdfsdf',
+#     c: 'sdfsdf'
+#   },
+#   address: [
+#     {
+#       mazik: 'Norblina',
+#       kasik: 'Katowice',
+#       city: 'Katowice'
+#     },
+#     {
+#       dupa: 'Katowice',
+#       city: 'Katowice'
+#     }
+#   ]
+# }
+# u5 = {
+#   name: 'Angelica',
+#   age: nil,
+#   address: nil,
+#   nowy: [
+#     ['dupdda']
+#   ]
+# }
+# u6 = {
+#   name: 'Stefan',
+#   nowy: [
+#     ['dupa'], ['jasia']
+#   ]
+# }
+
+u1 = { name: "John", age: 12, address: [] }
+u2 = { name: "Adam", hobbies: ["guitar", "banjo"]}
+u3 = { name: "Angelica", address: [ { street: "Norblina", city: "Katowice" }, { city: "Katowice" }]}
+u4 = { name: "Angelica", address: [ { mazik: "Norblina", city: "Katowice" }, { dupa: "Katowice", city: "Katowice" }]}
+u5 = { name: "Angelica", age: 12, address: []}
+u6 = { name: "Angelica", age: 13, inny: {a: 1, b: 2}}
+
+hashes = [u1, u2, u3, u4, u5, u6]
+puts MultijsonSchemaGenerator.generate(hashes).to_json
