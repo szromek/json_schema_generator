@@ -13,27 +13,9 @@ h1 = JSON.parse(json1)
 h2 = JSON.parse(json2)
 h3 = JSON.parse(json3)
 
-puts h1
-puts '\n=================\n'
-puts h2
-puts '\n=================\n'
-puts h3
-puts '\n=================\n'
-# hashes = [h1, h2, h3, h1, h2, h3, h1, h2, h3, h1, h2, h3, h1, h2, h3, h1, h2, h3, h1, h2, h3, h1, h2, h3]
+# puts Watchdocs::JSON::SchemaGenerator.new([h1, h2, h3]).call.to_json
 
-# puts '1 execution'
-# one = Benchmark.measure do
-#   MultijsonSchemaGenerator.generate(hashes).to_json
-# end
+json_array1 = '[{ "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }, { "items": [{ "id": "number", "name": "string" }], "category": "string" }]'
 
-# puts one
-
-
-# puts '1000 executions'
-# tousand = Benchmark.measure do
-#   1000.times do
-#     MultijsonSchemaGenerator.generate(hashes).to_json
-#   end
-# end
-
-# puts tousand
+a1 = JSON.parse(json_array1)
+puts Watchdocs::JSON::SchemaGenerator.new([a1]).call.to_json

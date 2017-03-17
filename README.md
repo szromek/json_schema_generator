@@ -1,4 +1,4 @@
-# MultijsonSchemaGenerator
+# Watchdocs Schema Generator
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -20,8 +20,8 @@ Or install it yourself as:
 ```ruby
 require "multijson_schema_generator"
 require "json"
-hashes = [{a:1}, {a:2}]
-MultijsonSchemaGenerator.generate(hashes).to_json
+hashes = [{a:'string'}, {a:'string'}]
+Watchdocs::JSON::SchemaGenerator.new(hashes).call.to_json
 ```
 
 ## Development

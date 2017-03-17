@@ -1,134 +1,130 @@
-require "multijson_schema_generator/version"
+require "multijson_schema_generator/core_ext/hash"
 
-class Hash
-  def deep_merge!(other_hash)
-    other_hash.each_pair do |current_key, other_value|
-      this_value = self[current_key]
+module Watchdocs
+  module JSON
+    class SchemaGenerator
+      attr_accessor :enumerables
+      attr_reader :merged
 
-      self[current_key] = if this_value.is_a?(Hash) && other_value.is_a?(Hash)
-        this_value.deep_merge(other_value)
-      elsif this_value.is_a?(Array) && other_value.is_a?(Array)
-        this_value + other_value
-      else
-        other_value || this_value
+      JSON_TYPES = %w(array object number string null boolean).freeze
+
+      def initialize(enumerables)
+        @enumerables = enumerables
       end
-    end
-    self
-  end
 
-  def deep_merge(other_hash)
-    dup.deep_merge!(other_hash)
-  end
-end
+      def call
+        return unless all_elements_valid?
+        merge_all
+        generate_schema
+      end
 
-class Object
-  def json_data_type
-    if is_a?(Numeric)
-      'number'
-    elsif is_a?(NilClass)
-      'null'
-    elsif is_a?(String)
-      'string'
-    elsif is_a?(TrueClass) || is_a?(FalseClass)
-      'boolean'
-    else
-      '*****'
-    end
-  end
-end
+      private
 
-module MultijsonSchemaGenerator
-  class << self
-    def generate(hashes = [])
-      @hashes = hashes
-      merged = hashes.reduce({}, :deep_merge)
-      return unless merged.is_a?(Hash)
+      def all_elements_valid?
+        !enumerables.empty? &&
+          enumerables.all? { |e| e.is_a?(Array) || e.is_a?(Hash) }
+      end
 
-      {
-        schema: 'http://json-schema.org/draft-04/schema#',
-        properties: properties(merged),
-        type: 'object',
-        required: required(merged.keys)
-      }
-    end
+      def remove_outdated_type
+        newest_class = enumerables.last.class
+        enumerables.select! { |e| e.is_a?(newest_class) }
+      end
 
-    def properties(h, parents = [])
-      properties = {}
-      h.each_pair do |k, v|
-        if v.is_a?(Hash)
-          parents << k
-          properties[k] = {
+      def merge_all
+        @merged = if enumerables.first.is_a?(Hash)
+                    enumerables.reduce({}, :deep_extended_merge)
+                  else
+                    enumerables.reduce([], :+)
+                  end
+      end
+
+      def generate_schema
+        schema = { schema: 'http://json-schema.org/draft-04/schema#' }
+        if merged.is_a?(Hash)
+          schema.merge!(
             type: 'object',
-            properties: properties(v, parents),
-            required: required(
-              v.keys,
-              parents: parents
+            properties: dig_into_hash(merged),
+            required: require_keys(merged.keys)
+          )
+        else
+          schema.merge!(
+            type: 'array',
+            items: dig_into_array(merged)
+          )
+        end
+        schema
+      end
+
+      def dig_into_hash(h, parents = [])
+        properties = {}
+        h.each_pair do |k, v|
+          if v.is_a?(Hash)
+            parents << k
+            properties[k] = {
+              type: 'object',
+              properties: dig_into_hash(v, parents),
+              required: require_keys(
+                v.keys,
+                parents: parents
+              )
+            }
+          elsif v.is_a?(Array)
+            properties[k] = {
+              type: 'array',
+              items: dig_into_array(v)
+            }
+          elsif v.is_a?(String)
+            properties[k] = {
+              type: get_type(v)
+            }
+          else
+            properties[k] = {
+              type: 'string'
+            }
+          end
+        end
+        properties
+      end
+
+      def dig_into_array(array)
+        return if array.empty?
+        if array.all? { |a| a.is_a?(Hash) }
+          merged = array.reduce({}, :deep_extended_merge)
+          {
+            type: 'object',
+            properties: dig_into_hash(merged),
+            required: require_keys(
+              merged.keys,
+              parents: [],
+              hashes: array
             )
           }
-        elsif v.is_a?(Array)
-          properties[k] = {
-            type: 'array',
-            items: array_items(v)
-          }
-        elsif non_enumerable_json_type?(v)
-          properties[k] = {
-            type: v.json_data_type
-          }
+        elsif array.all? { |a| a.is_a?(Array) }
+          # TODO: Extend functionality here
+          # to support array or arrays better
+          merged = array.reduce([], :+)
+          dig_into_array(merged)
+        elsif array.uniq.one?
+          { type: get_type(array.first) }
         else
-          properties[k] = {
-            type: 'unknown'
-          }
+          # TODO: Support mixed arrays
+          { type: 'mixed' }
         end
       end
-      properties
-    end
 
-    def array_items(array)
-      return if array.empty?
-      if array.all? { |a| a.is_a?(Hash) }
-        merged = array.reduce({}, :deep_merge)
-        {
-          type: 'object',
-          properties: properties(merged),
-          required: required(
-            merged.keys,
-            parents:[],
-            hashes: array
-          )
-        }
-      elsif array.all? { |a| a.is_a?(Array) }
-        merged = array.reduce([], :+)
-        array_items(merged)
-      elsif all_of_the_same_json_type?(array)
-        { type: array.first.json_data_type }
-      else
-        { type: 'mixed' }
-      end
-    end
-
-    def required(keys, parents: [], hashes: nil)
-      hashes ||= @hashes
-      keys.select do |k|
-        hashes.all? do |h|
-          parent = parents.inject(h) { |hash, key| hash.fetch(key, {}) }
-          parent.nil? || parent.empty? || parent.keys.include?(k)
+      def require_keys(keys, parents: [], hashes: nil)
+        hashes ||= enumerables
+        keys.select do |k|
+          hashes.all? do |h|
+            parent = parents.inject(h) { |hash, key| hash.fetch(key, {}) }
+            parent.nil? || parent.empty? || parent.keys.include?(k)
+          end
         end
       end
-    end
 
-    def non_enumerable_json_type?(v)
-      v.is_a?(String) ||
-        v.is_a?(Numeric) ||
-        v.is_a?(TrueClass) ||
-        v.is_a?(FalseClass) ||
-        v.is_a?(NilClass)
-    end
-
-    def all_of_the_same_json_type?(array)
-      array.all? { |a| a.is_a?(String) } ||
-        array.all? { |a| a.is_a?(Numeric) } ||
-        array.all? { |a| a.is_a?(TrueClass) || a.is_a?(FalseClass) } ||
-        array.all? { |a| a.is_a?(NilClass) }
+      def get_type(type)
+        JSON_TYPES.include?(type) ? type : 'string'
+      end
     end
   end
 end
