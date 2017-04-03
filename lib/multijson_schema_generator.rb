@@ -1,10 +1,12 @@
 require "multijson_schema_generator/core_ext/hash"
+require 'pry'
+require 'pry-nav'
 
 module Watchdocs
   module JSON
     class SchemaGenerator
       attr_accessor :enumerables
-      attr_reader :merged
+      attr_reader :merged, :root_hashes
 
       JSON_TYPES = %w(array object number string null boolean).freeze
 
@@ -14,7 +16,9 @@ module Watchdocs
 
       def call
         return unless all_elements_valid?
+        remove_outdated_type
         merge_all
+        set_root_hashes
         generate_schema
       end
 
@@ -26,12 +30,23 @@ module Watchdocs
       end
 
       def remove_outdated_type
-        newest_class = enumerables.last.class
-        enumerables.select! { |e| e.is_a?(newest_class) }
+        enumerables.select! { |e| e.is_a?(enumerable_class) }
+      end
+
+      def enumerable_class
+        enumerables.last.class
+      end
+
+      def set_root_hashes
+        @root_hashes = if enumerable_class == Hash
+                         enumerables
+                       elsif merged.all? { |e| e.is_a?(Hash) }
+                         merged
+                       end
       end
 
       def merge_all
-        @merged = if enumerables.first.is_a?(Hash)
+        @merged = if enumerable_class == Hash
                     enumerables.reduce({}, :deep_extended_merge)
                   else
                     enumerables.reduce([], :+)
@@ -62,11 +77,11 @@ module Watchdocs
             parents << k
             properties[k] = {
               type: 'object',
-              properties: dig_into_hash(v, parents),
               required: require_keys(
                 v.keys,
                 parents: parents
-              )
+              ),
+              properties: dig_into_hash(v, parents)
             }
           elsif v.is_a?(Array)
             properties[k] = {
@@ -89,21 +104,24 @@ module Watchdocs
       def dig_into_array(array)
         return if array.empty?
         if array.all? { |a| a.is_a?(Hash) }
+          @root_hashes = array unless root_hashes
           merged = array.reduce({}, :deep_extended_merge)
           {
             type: 'object',
-            properties: dig_into_hash(merged),
             required: require_keys(
               merged.keys,
-              parents: [],
               hashes: array
-            )
+            ),
+            properties: dig_into_hash(merged)
           }
         elsif array.all? { |a| a.is_a?(Array) }
           # TODO: Extend functionality here
           # to support array or arrays better
           merged = array.reduce([], :+)
-          dig_into_array(merged)
+          {
+            type: 'array',
+            items: dig_into_array(merged)
+          }
         elsif array.uniq.one?
           { type: get_type(array.first) }
         else
@@ -113,7 +131,7 @@ module Watchdocs
       end
 
       def require_keys(keys, parents: [], hashes: nil)
-        hashes ||= enumerables
+        hashes ||= root_hashes
         keys.select do |k|
           hashes.all? do |h|
             parent = parents.inject(h) { |hash, key| hash.fetch(key, {}) }
