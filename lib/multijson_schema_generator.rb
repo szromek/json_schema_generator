@@ -102,7 +102,7 @@ module Watchdocs
       end
 
       def dig_into_array(array)
-        return if array.empty?
+        return {} if array.empty?
         if array.all? { |a| a.is_a?(Hash) }
           @root_hashes = array unless root_hashes
           merged = array.reduce({}, :deep_extended_merge)
