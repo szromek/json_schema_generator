@@ -135,7 +135,8 @@ module Watchdocs
         keys.select do |k|
           hashes.all? do |h|
             parent = parents.inject(h) { |hash, key| hash.fetch(key, {}) }
-            parent.nil? || parent.empty? || parent.keys.include?(k)
+            parent.nil? || parent.empty? ||
+              !parent.is_a?(Hash) || parent.keys.include?(k)
           end
         end
       end
