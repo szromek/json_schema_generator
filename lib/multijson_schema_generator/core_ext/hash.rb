@@ -8,6 +8,7 @@ class Hash
       elsif this_value.is_a?(Array) && other_value.is_a?(Array)
         this_value + other_value
       else
+        return this_value if other_value == 'null'
         other_value || this_value
       end
     end
