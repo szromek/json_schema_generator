@@ -7,8 +7,9 @@ class Hash
         this_value.deep_extended_merge(other_value)
       elsif this_value.is_a?(Array) && other_value.is_a?(Array)
         this_value + other_value
+      elsif other_value == 'null'
+        this_value
       else
-        return this_value if other_value == 'null'
         other_value || this_value
       end
     end
