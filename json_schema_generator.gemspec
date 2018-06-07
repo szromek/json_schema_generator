@@ -4,10 +4,10 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'multijson_schema_generator/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "multijson_schema_generator"
-  spec.version       = MultijsonSchemaGenerator::VERSION
-  spec.authors       = ["mazikwyry"]
-  spec.email         = ["a.mazur@exlabs.co.uk"]
+  spec.name          = "json_schema_generator"
+  spec.version       = JsonSchemaGenerator::VERSION
+  spec.authors       = ["mazikwyry", "szromek"]
+  spec.email         = ["a.mazur@exlabs.co.uk", "k.szromek@exlabs.pl"]
 
   spec.summary       = %q{Write a short summary, because Rubygems requires one.}
   spec.description   = %q{sdfsdite a longer description or delete this line.}
