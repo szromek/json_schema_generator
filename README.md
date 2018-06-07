@@ -13,7 +13,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install multijson_schema_generator
+    $ gem install json_schema_generator
 
 ## Usage
 

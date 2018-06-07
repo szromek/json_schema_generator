@@ -1,7 +1,7 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'multijson_schema_generator/version'
+require 'json_schema_generator/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "json_schema_generator"
